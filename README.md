@@ -31,7 +31,7 @@ The list lives in the config file as `{"ignore": ["<project dir name>"]}`, so yo
 
 - **List**: search over name, description, body and filename, with every term required. Filter by type, and sort by newest or name.
 - **Graph**: `[[links]]` within the selected scope. Nodes are colored by type and sized by degree. Broken links point at a dashed ghost node. Selecting a node highlights its neighbours.
-- **Lint**: findings grouped by rule, filtered by severity.
+- **Lint**: findings grouped by rule, filtered by severity. **Copy for Claude** copies the findings on screen as a Markdown prompt to paste into a Claude Code session. The prompt names each memory directory by absolute path and gives a fix for each rule it contains.
 - **Detail**: frontmatter, the rendered body, outgoing links and backlinks. A link that resolves only loosely shows amber, and a broken one shows red.
 
 The URL hash holds the whole view state, so reload, back/forward and bookmarks all work. Keys: `/` focuses search, `j`/`k` step through the list, `[` hides or shows the projects sidebar.

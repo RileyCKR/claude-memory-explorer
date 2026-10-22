@@ -1,3 +1,4 @@
+import { lintReport } from './lint-export.js';
 import { marked } from './vendor/marked.esm.js';
 
 const TYPES = ['user', 'feedback', 'project', 'reference', 'other'];
@@ -243,7 +244,9 @@ function renderProjects() {
 function renderToolbar() {
   const tb = $('#toolbar');
   if (state.tab === 'lint') {
-    tb.innerHTML = SEVERITIES.map((s) => `<button class="chip" data-sev="${s}" aria-pressed="${state.sev.has(s)}"><span class="sev ${s}">${s}</span></button>`).join('');
+    tb.innerHTML =
+      SEVERITIES.map((s) => `<button class="chip" data-sev="${s}" aria-pressed="${state.sev.has(s)}"><span class="sev ${s}">${s}</span></button>`).join('') +
+      `<button class="chip" id="copy-lint" title="Copy the findings shown as a Markdown prompt for Claude"${shownFindings().length ? '' : ' disabled'}>Copy for Claude</button>`;
     return;
   }
   const counts = Object.fromEntries(TYPES.map((t) => [t, 0]));
@@ -292,10 +295,26 @@ function renderList() {
 
 // ---------- rendering: lint ----------
 
+const shownFindings = () => state.data.lint.filter((f) => state.sev.has(f.severity) && inScope(f.project));
+
+async function copyLint(btn) {
+  const findings = shownFindings();
+  let label;
+  try {
+    await navigator.clipboard.writeText(lintReport(findings, idx.projects));
+    label = `Copied ${findings.length}`;
+  } catch (e) {
+    label = 'Copy failed';
+    btn.title = String(e.message || e);
+  }
+  btn.textContent = label;
+  setTimeout(() => (btn.textContent = 'Copy for Claude'), 1500);
+}
+
 function renderLint() {
   const view = $('#view');
   view.className = 'view';
-  const findings = state.data.lint.filter((f) => state.sev.has(f.severity) && inScope(f.project));
+  const findings = shownFindings();
   if (!findings.length) {
     view.innerHTML = `<div class="empty">No findings at the selected severities.</div>`;
     return;
@@ -571,10 +590,11 @@ document.addEventListener('click', (e) => {
     scopeOpen = false;
     renderProjects();
   }
-  const t = e.target.closest('[data-key],[data-project],[data-ignore],[data-tab],[data-type],[data-sev],#labels,#refresh,.ign-head,#side-toggle,#scope');
+  const t = e.target.closest('[data-key],[data-project],[data-ignore],[data-tab],[data-type],[data-sev],#labels,#refresh,.ign-head,#side-toggle,#scope,#copy-lint');
   if (!t) return;
   if (t.matches('a')) e.preventDefault();
   if (t.id === 'refresh') return load({ force: true });
+  if (t.id === 'copy-lint') return copyLint(t);
   if (t.id === 'side-toggle') return toggleSide();
   if (t.id === 'scope') {
     scopeOpen = !scopeOpen;
