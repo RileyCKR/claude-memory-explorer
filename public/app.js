@@ -358,7 +358,6 @@ function graphData() {
 function renderGraph() {
   const view = $('#view');
   view.className = 'view graph' + (state.labels ? ' labels' : '');
-  graph?.sim.stop();
   view.innerHTML = `<div class="legend">${TYPES.map((t) => `<span><span class="dot" style="background:${color(t)}"></span> ${t}</span>`).join('')}<span style="color:var(--error)">◌ broken</span></div>`;
   const { nodes, links } = graphData();
   if (!nodes.length) {
@@ -402,11 +401,10 @@ function renderGraph() {
     .force('x', d3.forceX().strength(0.06))
     .force('y', d3.forceY().strength(0.06))
     .force('collide', d3.forceCollide().radius((d) => 6 + Math.sqrt(d.degree) * 2))
-    .on('tick', draw)
-    .on('end', () => nodes.forEach((n) => positions.set(n.id, { x: n.x, y: n.y })));
-  // Settle a fresh layout before the first paint so it can be framed to fit;
-  // animating from a random start leaves half the nodes off-screen.
-  sim.stop();
+    .stop();
+  // The layout settles before the first paint, so it can be framed to fit, and
+  // never moves after. forceLink also swaps each link's ids for node objects,
+  // which draw() needs, so the simulation is built even when nothing ticks.
   if (!nodes.every((n) => positions.has(n.id))) {
     sim.tick(300);
     nodes.forEach((n) => positions.set(n.id, { x: n.x, y: n.y }));
@@ -417,24 +415,7 @@ function renderGraph() {
   const k = Math.min(2, 0.9 * Math.min(width / (x1 - x0 + 80 || 1), height / (y1 - y0 + 80 || 1)));
   svg.call(zoom.transform, d3.zoomIdentity.scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2));
 
-  node.call(
-    d3
-      .drag()
-      .on('start', (e, d) => {
-        if (!e.active) sim.alphaTarget(0.2).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-      })
-      .on('drag', (e, d) => {
-        d.fx = e.x;
-        d.fy = e.y;
-      })
-      .on('end', (e, d) => {
-        if (!e.active) sim.alphaTarget(0);
-        d.fx = d.fy = null;
-      }),
-  );
-  graph = { sim, node, link };
+  graph = { node, link };
   highlightGraph();
 }
 
