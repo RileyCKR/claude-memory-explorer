@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Explorer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='4' cy='4' r='2.5' fill='%23c2410c'/%3E%3Ccircle cx='12' cy='6' r='2.5' fill='%232563eb'/%3E%3Ccircle cx='7' cy='12' r='2.5' fill='%2316a34a'/%3E%3Cpath d='M4 4L12 6L7 12Z' fill='none' stroke='%23888' stroke-width='1'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/d3.min.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1>Memory Explorer</h1>
+    <input id="search" type="search" placeholder="Search name, description, body  ( / )" autocomplete="off" spellcheck="false">
+    <span id="scanned" class="muted"></span>
+    <button id="refresh" type="button" title="Rescan memory directories">Refresh</button>
+  </header>
+  <div class="layout">
+    <nav id="projects" class="pane" aria-label="Projects"></nav>
+    <main class="pane center">
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="list">List</button>
+        <button role="tab" data-tab="graph">Graph</button>
+        <button role="tab" data-tab="lint">Lint</button>
+        <div id="toolbar" class="toolbar"></div>
+      </div>
+      <section id="view" class="view"></section>
+    </main>
+    <aside id="detail" class="pane detail" aria-label="Memory detail"></aside>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
