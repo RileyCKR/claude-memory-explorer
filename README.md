@@ -34,7 +34,7 @@ The list lives in the config file as `{"ignore": ["<project dir name>"]}`, so yo
 - **Lint**: findings grouped by rule, filtered by severity.
 - **Detail**: frontmatter, the rendered body, outgoing links and backlinks. A link that resolves only loosely shows amber, and a broken one shows red.
 
-The URL hash holds the whole view state, so reload, back/forward and bookmarks all work. Keys: `/` focuses search, `j`/`k` step through the list.
+The URL hash holds the whole view state, so reload, back/forward and bookmarks all work. Keys: `/` focuses search, `j`/`k` step through the list, `[` hides or shows the projects sidebar.
 
 ## Link resolution
 

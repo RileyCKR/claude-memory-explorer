@@ -10,7 +10,12 @@
 </head>
 <body>
   <header class="top">
+    <button id="side-toggle" class="icon" type="button" aria-controls="projects"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor"/><path d="M6 2.5v11" stroke="currentColor"/></svg></button>
     <h1>Memory Explorer</h1>
+    <div class="scope-wrap">
+      <button id="scope" class="proj" type="button" aria-haspopup="true" aria-controls="scope-menu" title="Switch project"></button>
+      <div id="scope-menu" class="scope-menu" hidden></div>
+    </div>
     <input id="search" type="search" placeholder="Search name, description, body  ( / )" autocomplete="off" spellcheck="false">
     <span id="scanned" class="muted"></span>
     <button id="refresh" type="button" title="Rescan memory directories">Refresh</button>

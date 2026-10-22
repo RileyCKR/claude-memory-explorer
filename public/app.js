@@ -29,6 +29,32 @@ const state = {
 };
 let idx = null;
 let ignoredOpen = false;
+let scopeOpen = false;
+
+const SIDE_KEY = 'memory-explorer:sidebar';
+let sideOpen = true;
+try {
+  sideOpen = localStorage.getItem(SIDE_KEY) !== 'closed';
+} catch {}
+
+function applySide() {
+  document.body.classList.toggle('no-side', !sideOpen);
+  const btn = $('#side-toggle');
+  btn.setAttribute('aria-expanded', String(sideOpen));
+  btn.title = `${sideOpen ? 'Hide' : 'Show'} projects ( [ )`;
+}
+
+function toggleSide() {
+  sideOpen = !sideOpen;
+  try {
+    localStorage.setItem(SIDE_KEY, sideOpen ? 'open' : 'closed');
+  } catch {}
+  scopeOpen = false;
+  applySide();
+  if (!state.data) return;
+  renderProjects();
+  if (state.tab === 'graph') renderGraph();
+}
 
 // ---------- URL hash <-> state ----------
 
@@ -190,7 +216,7 @@ function projectRow(r) {
 // the active row never disappears.
 function ignoredSection(rows) {
   const open = ignoredOpen || rows.some((r) => r.id === state.project);
-  return `<button id="ignored-toggle" class="ign-head" aria-expanded="${open}" title="Saved in ${esc(state.data.config.path)}">${open ? '▾' : '▸'} Ignored (${rows.length})</button>${open ? rows.map(projectRow).join('') : ''}`;
+  return `<button class="ign-head" aria-expanded="${open}" title="Saved in ${esc(state.data.config.path)}">${open ? '▾' : '▸'} Ignored (${rows.length})</button>${open ? rows.map(projectRow).join('') : ''}`;
 }
 
 function renderProjects() {
@@ -198,11 +224,18 @@ function renderProjects() {
   const active = state.data.projects.filter((p) => !p.ignored);
   const ignored = state.data.projects.filter((p) => p.ignored);
   const all = { id: ALL, label: 'All projects', title: state.data.root, n: active.reduce((n, p) => n + p.memories.length, 0) };
-  $('#projects').innerHTML =
-    '<div class="nav-head">Projects</div>' +
-    [all, ...active.map(row)].map(projectRow).join('') +
-    (ignored.length ? ignoredSection(ignored.map(row)) : '');
+  const rows = [all, ...active.map(row), ...ignored.map(row)];
+  const list = [all, ...active.map(row)].map(projectRow).join('') + (ignored.length ? ignoredSection(ignored.map(row)) : '');
+  $('#projects').innerHTML = '<div class="nav-head">Projects</div>' + list;
   $('#projects .proj.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+  // With the sidebar collapsed, the header shows the current project's row and
+  // opens the same list as a menu.
+  const cur = rows.find((r) => r.id === state.project) || all;
+  $('#scope').innerHTML = `<span class="name">${esc(cur.label)}</span><span class="count">${cur.n}</span>${badges(lintCounts(cur.id))}<span class="caret">▾</span>`;
+  $('#scope').setAttribute('aria-expanded', String(scopeOpen));
+  $('#scope-menu').hidden = !scopeOpen;
+  $('#scope-menu').innerHTML = scopeOpen ? list : '';
 }
 
 // ---------- rendering: toolbar ----------
@@ -553,18 +586,30 @@ function render({ graph: rebuildGraph = false } = {}) {
 // ---------- events ----------
 
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-key],[data-project],[data-ignore],[data-tab],[data-type],[data-sev],#labels,#refresh,#ignored-toggle');
+  if (scopeOpen && !e.target.closest('.scope-wrap')) {
+    scopeOpen = false;
+    renderProjects();
+  }
+  const t = e.target.closest('[data-key],[data-project],[data-ignore],[data-tab],[data-type],[data-sev],#labels,#refresh,.ign-head,#side-toggle,#scope');
   if (!t) return;
   if (t.matches('a')) e.preventDefault();
   if (t.id === 'refresh') return load({ force: true });
-  if (t.id === 'ignored-toggle') {
+  if (t.id === 'side-toggle') return toggleSide();
+  if (t.id === 'scope') {
+    scopeOpen = !scopeOpen;
+    return renderProjects();
+  }
+  if (t.classList.contains('ign-head')) {
     ignoredOpen = t.getAttribute('aria-expanded') !== 'true';
     return renderProjects();
   }
   if (t.id === 'labels') return set({ labels: !state.labels }, { graph: true });
   if (t.dataset.ignore) return setIgnored(t.dataset.ignore, t.dataset.ignored === 'true');
   if (t.dataset.tab) return set({ tab: t.dataset.tab }, { push: true });
-  if (t.dataset.project) return set({ project: t.dataset.project, mem: null }, { push: true });
+  if (t.dataset.project) {
+    scopeOpen = false;
+    return set({ project: t.dataset.project, mem: null }, { push: true });
+  }
   if (t.dataset.type) {
     const types = new Set(state.types);
     types.has(t.dataset.type) ? types.delete(t.dataset.type) : types.add(t.dataset.type);
@@ -600,6 +645,12 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     $('#search').focus();
     $('#search').select();
+  } else if (e.key === '[' && !typing) {
+    toggleSide();
+  } else if (e.key === 'Escape' && scopeOpen) {
+    scopeOpen = false;
+    renderProjects();
+    $('#scope').focus();
   } else if (e.key === 'Escape' && typing) {
     document.activeElement.blur();
   } else if ((e.key === 'j' || e.key === 'k') && !typing && state.tab === 'list') {
@@ -619,5 +670,6 @@ window.addEventListener('popstate', () => {
 window.addEventListener('focus', () => load());
 window.addEventListener('resize', () => state.tab === 'graph' && renderGraph());
 
+applySide();
 readHash();
 load({ force: true });

@@ -71,6 +71,15 @@ code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-s
   background: var(--panel);
 }
 .top h1 { font-size: 15px; margin: 0; white-space: nowrap; }
+.icon { display: inline-flex; padding: 4px; border-color: transparent; background: none; color: var(--muted); }
+.icon:hover { color: var(--text); }
+.scope-wrap { position: relative; display: none; min-width: 0; }
+.no-side .scope-wrap { display: block; }
+#scope { width: auto; max-width: 340px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); padding: 3px 10px; }
+#scope .caret { color: var(--muted); font-size: 10px; }
+.scope-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 10; width: 320px; max-width: calc(100vw - 32px); max-height: 70vh; overflow: auto; padding: 4px 0; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / .18); }
+.scope-menu[hidden] { display: none; }
+.scope-menu .proj, .scope-menu .ign-head { width: 100%; }
 #search {
   flex: 1;
   max-width: 520px;
@@ -82,11 +91,16 @@ code, pre { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-s
 #scanned { font-size: 12px; white-space: nowrap; }
 
 .layout {
+  --side: clamp(200px, 18vw, 270px);
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 270px minmax(0, 1fr) minmax(0, 1.15fr);
+  /* The detail column shrinks faster than the list as the room beside the sidebar
+     narrows: about a 1:1.15 split at 1650px of room, 320px for detail by 950px. */
+  grid-template-columns: var(--side) minmax(0, 1fr) clamp(320px, calc(0.8 * (100% - var(--side)) - 440px), 960px);
 }
+.no-side .layout { --side: 0px; }
+.no-side #projects { visibility: hidden; border: 0; padding: 0; }
 .pane { min-height: 0; overflow: auto; }
 #projects { border-right: 1px solid var(--border); padding: 8px 0; }
 .detail { border-left: 1px solid var(--border); background: var(--panel); padding: 16px 20px 40px; }
@@ -228,6 +242,7 @@ a.wikilink.broken { color: var(--error); border-bottom-style: wavy; }
   .pane { overflow: visible; }
   #projects { border-right: 0; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; padding: 4px; }
   #projects .nav-head { display: none; }
+  .no-side #projects { display: none; }
   .ign-head { width: auto; flex: none; white-space: nowrap; padding: 5px 10px; }
   .proj { width: auto; white-space: nowrap; border-radius: 6px; }
   .center { overflow: visible; }
